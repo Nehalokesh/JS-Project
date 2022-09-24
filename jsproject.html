@@ -1,8 +1,8 @@
 <html>
     <body>
         <form onsubmit="saveToLocalStorage(event)">
-            <label> Choose expenseamount</label>
-            <input id='expenseamount' type="tel" name="expenseamount"  required/>
+            <label for ="expenseamount"> Choose expenseamount</label>
+            <input type="number" id='expenseamount' name="expenseamount" min="100" max="500000" required/>
             <label> Choose description</label>
             <input id='description' type="text" name="description"  required/>
             <label for="category">Choose category:</label>
@@ -15,6 +15,7 @@
             <button> Add Expense </button>
         </form>
         <ul id='listOfUsers'></ul>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js"></script>
         <script>
             function saveToLocalStorage(event) {
                 event.preventDefault();
@@ -23,34 +24,53 @@
                 const category = event.target.category.value;
                 // localStorage.setItem('expenseamount', expenceamount);
                 // localStorage.setItem('description', description);
-                // localStorage.setItem('category', category)
+                // localStorage.setItem('category', category)
                 const obj = {
                     expenseamount,
                     description,
                     category
                 }
-                localStorage.setItem(obj.category, JSON.stringify(obj))
-                showNewUserOnScreen(obj)
+                axios.post("https://crudcrud.com/api/8d059c7167cf46e2999dfed9a8bf4475/Expensetracking", obj)
+                .then((response) => {
+                  showNewUserOnScreen(response.data)
+                  console.log(response)
+                })
+                .catch((error) =>{
+                  document.body.innerHTML=document.body.innerHTML+"<h4> Something went wrong</h4>"
+                  console.log(error)
+                })
+                //localStorage.setItem(obj.category, JSON.stringify(obj))
+                //showNewUserOnScreen(obj)
             }
 
             window.addEventListener("DOMContentLoaded", () => {
-                const localStorageObj = localStorage;
-                const localstoragekeys  = Object.keys(localStorageObj)
+                axios.get("https://crudcrud.com/api/8d059c7167cf46e2999dfed9a8bf4475/Expensetracking")
+                .then((response) => {
+                  console.log(response)
+                  for(var i=0; i<response.data.length; i++){
+                    showNewUserOnScreen(response.data[i])
+                  }
+                })
+                .catch((error) =>{
+                  console.log(error)
 
-                for(var i =0; i< localstoragekeys.length; i++){
-                    const key = localstoragekeys[i]
-                    const userDetailsString = localStorageObj[key];
-                    const userDetailsObj = JSON.parse(userDetailsString);
-                    showNewUserOnScreen(userDetailsObj)
-                }
+                })
+                //const localStorageObj = localStorage;
+                //const localstoragekeys  = Object.keys(localStorageObj)
+
+                //for(var i =0; i< localstoragekeys.length; i++){
+                    //const key = localstoragekeys[i]
+                    //const userDetailsString = localStorageObj[key];
+                   // const userDetailsObj = JSON.parse(userDetailsString);
+                    //showNewUserOnScreen(userDetailsObj)
+            //})
             })
 
             function showNewUserOnScreen(user){
 
-
                 const parentNode = document.getElementById('listOfUsers');
-                const childHTML = `<li id=${user.expenseamount}> ${user.expenseamount} - ${user.category}- ${user.description}
-                                        <button onclick=deleteUser('${user.expenseamount}')> Delete Expense </button>
+                const childHTML = `<li id=${user._id}> ${user.expenseamount} - ${user.category}- ${user.description}
+                                        <button onclick=deleteUser('${user._id}')> Delete Expense </button>
                                         <button onclick=editUserDetails('${user.expenseamount}','${user.description}','${user.category}')>Edit Expense </button>
                                      </li>`
 
@@ -66,28 +86,29 @@
 
             // deleteUser('abc@gmail.com')
 
-            function deleteUser(expenseamount){
-                console.log(expenseamount)
-                localStorage.removeItem(expenseamount);
-                removeUserFromScreen(expenseamount);
-
+            function deleteUser(userId){
+                axios.delete(`https://crudcrud.com/api/8d059c7167cf46e2999dfed9a8bf4475/Expensetracking/${userId}`)
+                .then((response) => {
+                  console.log(response)
+                  for(var i=0; i<response.data.length; i++){
+                    deleteUser(response.data[i])
+                  }
+                  removeUserFromScreen(userId)
+                })
+                .catch((error) =>{
+                  console.log(error)
+                })
             }
 
             function removeUserFromScreen(expenseamount){
                 const parentNode = document.getElementById('listOfUsers');
                 const childNodeToBeDeleted = document.getElementById(expenseamount);
-
-                parentNode.removeChild(childNodeToBeDeleted)
+                if(childNodeToBeDeleted){
+                    parentNode.removeChild(childNodeToBeDeleted)
             }
+         }
+         </script>
 
 
-
-
-
-
-
-        </script>
-
-
-    </body>
+</body>
 </html>
